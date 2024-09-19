@@ -10,7 +10,7 @@ def handle_user_connection(connection: socket.socket, address: str) -> None:
     '''
     while True:
         try:
-            # Get client message
+            # TODO Get client message
             msg = connection.recv(1024)
 
             # If no message is received, there is a chance that connection has ended
@@ -44,7 +44,7 @@ def broadcast(message: str, connection: socket.socket) -> None:
         # Check if isn't the connection of who's send
         if client_conn != connection:
             try:
-                # Sending message to client connection
+                # TODO Sending message to client connection
                 client_conn.send(message.encode())
 
             # if it fails, there is a chance of socket has died

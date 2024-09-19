@@ -7,6 +7,7 @@ def handle_messages(connection: socket.socket):
 
     while True:
         try:
+            # TODO Receive message
             msg = connection.recv(1024)
 
             # If there is no message, there is a chance that connection has closed
