@@ -76,8 +76,8 @@ def server() -> None:
     LISTENING_PORT = 12000
     
     try:
-        # TODO Create server and specifying that it can only handle 4 connections by time!
-        
+        # TODO Create server and specify that it can only handle 4 connections by time!
+
 
         print('Server running!')
         
