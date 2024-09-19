@@ -10,8 +10,8 @@ def handle_user_connection(connection: socket.socket, address: str) -> None:
     '''
     while True:
         try:
-            # Get client message
-            msg = connection.recv(1024)
+            # TODO Get client message
+             
 
             # If no message is received, there is a chance that connection has ended
             # so in this case, we need to close connection and remove it from connections list.
@@ -21,7 +21,9 @@ def handle_user_connection(connection: socket.socket, address: str) -> None:
                 
                 # Build message format and broadcast to users connected on server
                 msg_to_send = f'From {address[0]}:{address[1]} - {msg.decode()}'
-                broadcast(msg_to_send, connection)
+                
+                
+                #TODO: Send the message out
 
             # Close connection if no message was sent
             else:
@@ -44,8 +46,8 @@ def broadcast(message: str, connection: socket.socket) -> None:
         # Check if isn't the connection of who's send
         if client_conn != connection:
             try:
-                # Sending message to client connection
-                client_conn.send(message.encode())
+                # TODO Send message to client connection
+                
 
             # if it fails, there is a chance of socket has died
             except Exception as e:
@@ -74,10 +76,8 @@ def server() -> None:
     LISTENING_PORT = 12000
     
     try:
-        # Create server and specifying that it can only handle 4 connections by time!
-        socket_instance = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket_instance.bind(('', LISTENING_PORT))
-        socket_instance.listen(4)
+        # TODO Create server and specifying that it can only handle 4 connections by time!
+        
 
         print('Server running!')
         

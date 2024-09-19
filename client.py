@@ -7,7 +7,7 @@ def handle_messages(connection: socket.socket):
 
     while True:
         try:
-            msg = connection.recv(1024)
+            # TODO Receive message
 
             # If there is no message, there is a chance that connection has closed
             # so the connection will be closed and an error will be displayed.
@@ -33,9 +33,8 @@ def client() -> None:
     SERVER_PORT = 12000
 
     try:
-        # Instantiate socket and start connection with server
-        socket_instance = socket.socket()
-        socket_instance.connect((SERVER_ADDRESS, SERVER_PORT))
+        # TODO Instantiate socket and start connection with server
+        
         # Create a thread in order to handle messages sent by server
         threading.Thread(target=handle_messages, args=[socket_instance]).start()
 
