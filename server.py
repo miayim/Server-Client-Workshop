@@ -1,83 +1,106 @@
-"""
-Simple HTTP Server
+import socket, threading
 
-A simple HTTP server that can process basic GET and PUT requests and send
-appropriate responses.
+# Global variable that mantain client's connections
+connections = []
 
-"""
+def handle_user_connection(connection: socket.socket, address: str) -> None:
+    '''
+        Get user connection in order to keep receiving their messages and
+        sent to others users/connections.
+    '''
+    while True:
+        try:
+            # Get client message
+            msg = connection.recv(1024)
 
-import socket
-import argparse
-import os
-import datetime
-import time
+            # If no message is received, there is a chance that connection has ended
+            # so in this case, we need to close connection and remove it from connections list.
+            if msg:
+                # Log message sent by user
+                print(f'{address[0]}:{address[1]} - {msg.decode()}')
+                
+                # Build message format and broadcast to users connected on server
+                msg_to_send = f'From {address[0]}:{address[1]} - {msg.decode()}'
+                broadcast(msg_to_send, connection)
 
-# parse command line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument("port", type=int, nargs='?', default=80 )
-args = parser.parse_args()
-PORT = args.port
-
-# create socket and listen for client connections
-serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serversocket.bind(("localhost", PORT))
-serversocket.listen(1)
-print(f"HTTP server started, serving at port {PORT}\n")
-
-# infinite loop to check if a client is connecting
-while 1:
-    clientsocket = None
-    try:
-        clientsocket, address = serversocket.accept()
-        request = clientsocket.recv(4096).decode()
-
-        # GET or PUT
-        method = request.split()[0]
-
-        # get the file/directory associated with request
-        # remove extra backslash char at beginning
-        request_uri = request.split()[1][1:]
-
-        msg = str()
-
-        # process GET requests
-        if method.strip() == 'GET':
-            #check if the file exists
-            if os.path.exists(request_uri):
-                modifiedTime = time.localtime(os.path.getmtime(request_uri))
-                _, ext = os.path.splitext(request_uri)
-                #send the status
-                msg = (f"HTTP/1.1 200 OK\r\n"
-                       f"Date: {str(datetime.datetime.now())}\r\n"
-                       f"Server: simple_server\r\n"
-                       f"Last-Modified: {time.strftime('%Y-%m-%d %H:%M:%S', modifiedTime)}\r\n"
-                       f"Content-Type: text/{ext[1:]}\r\n"
-                       f"Content-Length: {str(os.path.getsize(request_uri))}\r\n\r\n" +
-                        open(request_uri, "r").read())
-
+            # Close connection if no message was sent
             else:
-                msg = (f"HTTP/1.1 404 Not Found\r\n"
-                       f"Date: {str(datetime.datetime.now())}\r\n"
-                       f"Server: Simple_Server\r\n")
+                remove_connection(connection)
+                break
 
-        # process PUT requests
-        elif method.strip() == 'PUT':
-            f = open(request_uri, "w")
-            if os.path.exists(request_uri):
-                msg = (f"HTTP/1.1 200 OK File Created\r\n"
-                       f"Date: {str(datetime.datetime.now())}\r\n"
-                       f"Server: Simple_Server\r\n")
-        else:
-            # invalid method specified by user
-            msg = (f"HTTP/1.1 405 Method not Allowed\r\n"
-                   f"Date: {str(datetime.datetime.now())}\r\n"
-                   f"Server:Simple_Server\r\n")
+        except Exception as e:
+            print(f'Error to handle user connection: {e}')
+            remove_connection(connection)
+            break
 
-        clientsocket.send(msg.encode())
-    except KeyboardInterrupt:
-        # gracefully close socket on keyboard interrupt
-        if clientsocket:
-            clientsocket.close()
-        break
 
-serversocket.close()
+def broadcast(message: str, connection: socket.socket) -> None:
+    '''
+        Broadcast message to all users connected to the server
+    '''
+
+    # Iterate on connections in order to send message to all client's connected
+    for client_conn in connections:
+        # Check if isn't the connection of who's send
+        if client_conn != connection:
+            try:
+                # Sending message to client connection
+                client_conn.send(message.encode())
+
+            # if it fails, there is a chance of socket has died
+            except Exception as e:
+                print('Error broadcasting message: {e}')
+                remove_connection(client_conn)
+
+
+def remove_connection(conn: socket.socket) -> None:
+    '''
+        Remove specified connection from connections list
+    '''
+
+    # Check if connection exists on connections list
+    if conn in connections:
+        # Close socket connection and remove connection from connections list
+        conn.close()
+        connections.remove(conn)
+
+
+def server() -> None:
+    '''
+        Main process that receive client's connections and start a new thread
+        to handle their messages
+    '''
+
+    LISTENING_PORT = 12000
+    
+    try:
+        # Create server and specifying that it can only handle 4 connections by time!
+        socket_instance = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_instance.bind(('', LISTENING_PORT))
+        socket_instance.listen(4)
+
+        print('Server running!')
+        
+        while True:
+
+            # Accept client connection
+            socket_connection, address = socket_instance.accept()
+            # Add client connection to connections list
+            connections.append(socket_connection)
+            # Start a new thread to handle client connection and receive it's messages
+            # in order to send to others connections
+            threading.Thread(target=handle_user_connection, args=[socket_connection, address]).start()
+
+    except Exception as e:
+        print(f'An error has occurred when instancing socket: {e}')
+    finally:
+        # In case of any problem we clean all connections and close the server connection
+        if len(connections) > 0:
+            for conn in connections:
+                remove_connection(conn)
+
+        socket_instance.close()
+
+
+if __name__ == "__main__":
+    server()

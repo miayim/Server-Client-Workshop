@@ -1,63 +1,63 @@
+import socket, threading
 
-"""
-Simple HTTP Client
-A simple HTTP client that can perform basic HTTP GET and PUT requests.
+def handle_messages(connection: socket.socket):
+    '''
+        Receive messages sent by the server and display them to user
+    '''
 
-"""
-import socket
-import argparse
+    while True:
+        try:
+            msg = connection.recv(1024)
 
-# this client can receive this many bytes of data at a time
-BUFFER_SIZE = 4096
+            # If there is no message, there is a chance that connection has closed
+            # so the connection will be closed and an error will be displayed.
+            # If not, it will try to decode message in order to show to user.
+            if msg:
+                print(msg.decode())
+            else:
+                connection.close()
+                break
 
-# number of seconds before client socket times out
-SOCKET_TIMEOUT = 5
+        except Exception as e:
+            print(f'Error handling message from server: {e}')
+            connection.close()
+            break
 
-# parse arguments from the command line
-parser = argparse.ArgumentParser()
-parser.add_argument("server", type=str, nargs='?')
-parser.add_argument("port", type=int, nargs='?', default='80')
-parser.add_argument("method", type=str, nargs='?')
-parser.add_argument("filename", type=str, nargs='?')
-args = parser.parse_args()
+def client() -> None:
+    '''
+        Main process that start client connection to the server 
+        and handle it's input messages
+    '''
 
-SERVER = args.server
-PORT = args.port
-METHOD = args.method
-FILE = args.filename
-
-try:
-    #  create a client socket and connect it to the server socket
-    clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    clientsocket.connect((SERVER, PORT))
-
-    # formulate http request from CLI args
-    request = (f"{METHOD} /{FILE} HTTP/1.1\r\nHost: {SERVER}:{PORT}\r\n"
-              f"User-Agent: simple_client\r\nAccept: */*\r\n\r\n")
-
-    # send request to server socket
-    clientsocket.send(request.encode())
-
-    # set a timeout for blocking socket operations to prevent hanging up
-    clientsocket.settimeout(SOCKET_TIMEOUT)
-
-    http_response = bytearray()
+    SERVER_ADDRESS = '127.0.0.1'
+    SERVER_PORT = 12000
 
     try:
-        # keep receiving bytes until a response from server is empty
-        while 1:
-            response = clientsocket.recv(BUFFER_SIZE)
-            if not response:
+        # Instantiate socket and start connection with server
+        socket_instance = socket.socket()
+        socket_instance.connect((SERVER_ADDRESS, SERVER_PORT))
+        # Create a thread in order to handle messages sent by server
+        threading.Thread(target=handle_messages, args=[socket_instance]).start()
+
+        print('Connected to chat!')
+
+        # Read user's input until it quit from chat and close connection
+        while True:
+            msg = input()
+
+            if msg == 'quit':
                 break
-            http_response += response
-    except socket.timeout:
-        print("socket timed out, printing response")
 
-    print(http_response.decode())
+            # Parse message to utf-8
+            socket_instance.send(msg.encode())
 
-    clientsocket.close()
+        # Close connection with the server
+        socket_instance.close()
 
-# close gracefully on keyboard interrupt
-except KeyboardInterrupt:
-    if clientsocket:
-        clientsocket.close()
+    except Exception as e:
+        print(f'Error connecting to server socket {e}')
+        socket_instance.close()
+
+
+if __name__ == "__main__":
+    client()
