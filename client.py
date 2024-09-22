@@ -47,8 +47,7 @@ def client() -> None:
             if msg == 'quit':
                 break
 
-            # Parse message to utf-8
-            socket_instance.send(msg.encode())
+            # TODO: send message to the server hint: the message needs to be encoded: msg.encode()
 
         # Close connection with the server
         socket_instance.close()
