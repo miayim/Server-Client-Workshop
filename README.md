@@ -6,7 +6,7 @@
 ## Clone this repo:
 Open Terminal (Mac/Linux) or Powershell (Windows) and run:
 ```
-`git clone git@github.com:miayim/Server-Client-Workshop.git`
+git clone git@github.com:miayim/Server-Client-Workshop.git
 ```
 
 ## Install dependencies:
