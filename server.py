@@ -74,7 +74,7 @@ def server() -> None:
     LISTENING_PORT = 12000
     
     try:
-        # Create server and specifying that it can only handle 4 connections by time!
+        # TODO Create server and specifying that it can only handle 4 connections by time!
         socket_instance = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket_instance.bind(('', LISTENING_PORT))
         socket_instance.listen(4)
