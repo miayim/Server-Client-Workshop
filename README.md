@@ -10,7 +10,7 @@ git clone git@github.com:miayim/Server-Client-Workshop.git
 ```
 
 ## Running the Project
-Open terminal and navigate to the repo you just cloned (`cd ~/Server-Client-Workshop`).
+Open terminal and navigate to the repo (`cd ~/Server-Client-Workshop`).
 
 To start a server run:
 ```
